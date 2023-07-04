@@ -5,9 +5,14 @@
 package it.polito.tdp.PremierLeague;
 
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 
+import org.jgrapht.graph.DefaultDirectedWeightedGraph;
+import org.jgrapht.graph.DefaultWeightedEdge;
+
 import it.polito.tdp.PremierLeague.model.Model;
+import it.polito.tdp.PremierLeague.model.Team;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -35,7 +40,7 @@ public class FXMLController {
     private Button btnSimula; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbSquadra"
-    private ComboBox<?> cmbSquadra; // Value injected by FXMLLoader
+    private ComboBox<Team> cmbSquadra; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtN"
     private TextField txtN; // Value injected by FXMLLoader
@@ -48,16 +53,54 @@ public class FXMLController {
 
     @FXML
     void doClassifica(ActionEvent event) {
+    	
+    	if (this.cmbSquadra.getValue() == null) {
+    		txtResult.appendText("Scegli una squadra");
+    		return;
+    	}
+    	
+    	// DefaultDirectedWeightedGraph<Team,DefaultWeightedEdge> graph = model.getGraph();
+    	
+    	Team team = this.cmbSquadra.getValue();
+    	
+    	List<Team> peggiori = model.getPeggiori(team);
+    	List<Team> migliori = model.getMigliori(team);
+    	
+    	txtResult.setText("SQUADRE MIGLIORI:\n");
+    		for (Team t : migliori)
+    			txtResult.appendText(t.getName() + " (" + (t.getPunteggio()-team.getPunteggio()) + ")\n");
+
+    		txtResult.appendText(" \n");	
+    		
+    	txtResult.appendText("SQUADRE PEGGIORI:\n");
+    		for (Team t : peggiori)
+    			txtResult.appendText(t.getName() + " (" + (team.getPunteggio()-t.getPunteggio()) + ")\n");
 
     }
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
+    	
+    	DefaultDirectedWeightedGraph<Team,DefaultWeightedEdge> graph = model.creaGrafo();
+    	
+    	txtResult.setText("Grafo creato con " + graph.vertexSet().size() + " vertici e " 
+    			+ graph.edgeSet().size() + " archi.\n\n" );
+    	
+    	cmbSquadra.getItems().addAll(graph.vertexSet());
+    	
+    	this.btnClassifica.setDisable(false);
+    	this.btnSimula.setDisable(false);
 
     }
 
     @FXML
     void doSimula(ActionEvent event) {
+    	
+    	model.run(Integer.parseInt(txtN.getText()), Integer.parseInt(txtX.getText()));
+    	
+    	txtResult.setText("Media reporter: " + model.getMediaRep() + ". Critici: " + model.getCritici() +".\n");
+    	
+    	
 
     }
 
@@ -74,5 +117,8 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	
+    	this.btnClassifica.setDisable(true);
+    	this.btnSimula.setDisable(true);
     }
 }
